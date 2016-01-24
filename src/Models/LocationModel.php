@@ -10,33 +10,107 @@ class LocationModel
         $this->db = $dbo;
     }
 
-	//Ïîëó÷åíèå âñåõ ëîêàöèé èç ÁÄ
-    public function getAll()
-    {
-        return 'Get All Locations model method called!';
+	//ĞŸĞ¾Ğ»ÑƒÑ‡ĞµĞ½Ğ¸Ğµ Ğ²ÑĞµÑ… Ğ»Ğ¾ĞºĞ°Ñ†Ğ¸Ğ¹ Ğ¸Ğ· Ğ‘Ğ”
+    public function getAll($limit = 50, $offset = 0)
+    {	
+		$rows = $this->db->fetchAll('SELECT 
+			locations.id,
+			locations.name, 
+			y(locations.geom) as lat,
+			x(locations.geom) as lon,
+			locations.temperature,
+			locations.population,
+			locations.source_id,
+			sources.name AS source_name
+			FROM locations 
+			LEFT JOIN sources ON locations.source_id = sources.id');
+        return $rows;
     }
 	
-	//Ïîëó÷åíèå îäíîé ëîêàöèè
+	//ĞŸĞ¾Ğ»ÑƒÑ‡ĞµĞ½Ğ¸Ğµ Ğ¾Ğ´Ğ½Ğ¾Ğ¹ Ğ»Ğ¾ĞºĞ°Ñ†Ğ¸Ğ¸
 	public function get($id)
     {
-        return 'Get location with id ' . $id . ' model method called!';
+        $row = $this->db->fetchAssoc('SELECT 
+			locations.id,
+			locations.name,
+			y(locations.geom) as lat,
+			x(locations.geom) as lon,
+			locations.temperature,
+			locations.population,
+			locations.source_id,
+			sources.name AS source_name 
+			FROM locations
+			LEFT JOIN sources ON locations.source_id = sources.id
+			WHERE locations.id = ?',
+			array($id)
+		);
+		
+		return $row;
     }
 
-	//Äîáàâëåíèå ëîêàöèè		
+	//Ğ”Ğ¾Ğ±Ğ°Ğ²Ğ»ĞµĞ½Ğ¸Ğµ Ğ»Ğ¾ĞºĞ°Ñ†Ğ¸Ğ¸		
 	public function add($data)
-    {
-        return 0;
+    {		
+		$stmt = $this->db->prepare('INSERT INTO locations
+			SET 
+			name = :name,
+			geom = GeomFromWKB(POINT(:lat, :lon)),
+			temperature = :temp,
+			population = :pop'		
+		);
+		$stmt->bindValue('name', $data['name']);
+		$stmt->bindValue('lat', $data['lat']);
+		$stmt->bindValue('lon', $data['lon']);
+		$stmt->bindValue('temp', $data['temp']);
+		$stmt->bindValue('pop', $data['pop']);
+		
+		$result = $stmt->execute();
+		
+		if(!$result) return false;
+		
+		$new_id = $this->db->lastInsertId();
+		
+		return $new_id;
     }
 
-	//Èçìåíåíèå ëîêàöèè		
+	//Ğ˜Ğ·Ğ¼ĞµĞ½ĞµĞ½Ğ¸Ğµ Ğ»Ğ¾ĞºĞ°Ñ†Ğ¸Ğ¸		
 	public function update($id, $data)
     {	
-		return 0;
+		
+		$row_count = $this->db->fetchColumn('SELECT 
+			COUNT(*)
+			FROM locations
+			WHERE id = ?',
+			array($id)
+		);
+		
+		if($row_count == 0) return false;
+		
+		$stmt = $this->db->prepare('UPDATE locations 
+			SET
+			name = :name,
+			geom = GeomFromWKB(POINT(:lat, :lon)),
+			temperature = :temp,
+			population = :pop
+			WHERE id = :id'
+		);
+		$stmt->bindValue('name', $data['name']);
+		$stmt->bindValue('lat', $data['lat']);
+		$stmt->bindValue('lon', $data['lon']);
+		$stmt->bindValue('temp', $data['temp']);
+		$stmt->bindValue('pop', $data['pop']);
+		$stmt->bindValue('id', $id);
+		
+		$result = $stmt->execute();
+	
+		return $result;
     }
 	
-	//Óäàëåíèå ëîêàöèè	
+	//Ğ£Ğ´Ğ°Ğ»ĞµĞ½Ğ¸Ğµ Ğ»Ğ¾ĞºĞ°Ñ†Ğ¸Ğ¸	
 	public function delete($id)
     {
-        return 0;
+        $result = $this->db->delete('locations', array('id' => $id));
+	
+		return $result;
     }
 }

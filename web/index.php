@@ -25,10 +25,11 @@ use Synoptic\Models as Models;
 $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'	=> 'pdo_mysql',
-		'dbname'	=> 'rest',
+		'dbname'	=> 'synoptic',
 		'host'		=> 'localhost',
 		'user'		=> 'root',
-		'password'	=> ''
+		'password'	=> '',
+		'charset'   => 'utf8'
     ),
 ));
 
@@ -60,7 +61,7 @@ $app->error(function (\Exception $e, $code) use ($app) {
 			
 			$message = $e->getMessage();
     }
-
+	
     return new JsonResponse( array(
 		'status'=>'error',
 		'message' => $message,

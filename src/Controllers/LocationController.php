@@ -3,6 +3,7 @@ namespace Synoptic\Controllers;
 
 use Silex\Application;
 use Silex\ControllerProviderInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class LocationController implements ControllerProviderInterface
 {
@@ -12,9 +13,9 @@ class LocationController implements ControllerProviderInterface
 		
 		//Получение всех локаций
         $controllers->get('/', function (Application $app) 
-		{
-			$data = $app['models.locations']->getAll();	
-
+		{			
+			$data = $app['models.locations']->getAll();
+			
 			if(!$data) 
 			{
 				return $app->abort(201, 'No content');	 
@@ -45,7 +46,15 @@ class LocationController implements ControllerProviderInterface
 		//Добавление локации	
 		$controllers->post('/', function (Application $app) 
 		{ 
-			$data = $app['request']->request;
+			$data = Array();
+			
+			$data['name'] = $app['request']->get('name');
+			$data['lat'] = $app['request']->get('lat');
+			$data['lon'] = $app['request']->get('lon');
+			$data['temp'] = $app['request']->get('temp');
+			$data['pop'] = $app['request']->get('pop');
+			$data['source_id'] = $app['request']->get('source_id');
+			
 			$id = $app['models.locations']->add($data);	
 			
 			if(!$id) 
@@ -63,22 +72,22 @@ class LocationController implements ControllerProviderInterface
 		//Изменение локации	
 		$controllers->put('/{id}', function (Application $app, $id) 
 		{
-			$data = $app['request']->request;
-			$result = $app['models.locations']->update($id, $data);	
-
-			//Если локации с таким ID нет в БД	
-			if($result === false) 
-			{
-				return $app->abort(400, 'Data not exists');	 
-			}
+			$post_data = $app['request']->request;
 			
-			//Если локация есть, но данные не измененились			
-			if($result == 0)
+			$data = Array();
+			
+			$data['name'] = $app['request']->get('name');
+			$data['lat'] = $app['request']->get('lat');
+			$data['lon'] = $app['request']->get('lon');
+			$data['temp'] = $app['request']->get('temp');
+			$data['pop'] = $app['request']->get('pop');
+			$data['source_id'] = $app['request']->get('source_id');	
+
+			$result = $app['models.locations']->update($id, $data);	
+					
+			if(!$result)
 			{
-				return $app->json( array(
-					'status'=>'ok',
-					'message' => 'Data not modifed'
-				));
+				return $app->abort(400, 'Data not exists');	
 			}
 				
 			return $app->json( array(
@@ -92,7 +101,8 @@ class LocationController implements ControllerProviderInterface
 		{
 			$result = $app['models.locations']->delete($id);
 			
-			if(!$result) {
+			if(!$result) 
+			{
 				return $app->abort(400, 'Data not exists');	
 			}
 			
