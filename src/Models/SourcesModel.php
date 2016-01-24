@@ -24,39 +24,50 @@ class SourcesModel
 		
 		return $row;
     }
-
-	//Получение ближайшего источника в радиусе, км
-    public function getNearestSource($lon, $lat, $dist = 100)
+	
+	//Получение ближайшего источника в радиусе, 100 км
+	public function getNearestSource($lon, $lat){
+		return $this->getNearestSources($lon, $lat, 1);
+	}
+	
+	//Получение ближайших источников в радиусе, 100 км
+    public function getNearestSources($lon, $lat, $limit = 100, $offset = 0)
     {	
 		//Получить координаты нижнего левого и верхнего правого углов квадрата поиска
+		$dist = 100;				//Радиус поиска, км.
 		$latdeg_len_km = 111.045;	//Длина градуса широты, км.
-		$rlat_part = $dist/$latdeg_len_km;
+
 		$rlon_part = $dist/abs(cos(deg2rad($lat))*$latdeg_len_km);
+		$rlat_part = $dist/$latdeg_len_km;
 		
-		$rlat1 = $lat-$rlat_part;
-		$rlat2 = $lat+$rlat_part;
 		$rlon1 = $lon-$rlon_part;
 		$rlon2 = $lon+$rlon_part;
+		$rlat1 = $lat-$rlat_part;
+		$rlat2 = $lat+$rlat_part;
 		
-		//Запросить входящие в зону точки и вернуть ближайшую
-		$stmt = $this->db->prepare('
-			SELECT id FROM sources 
+		//Запросить входящие в зону точки
+		$stmt = $this->db->prepare('SELECT id, name FROM sources 
 			WHERE st_within(geom, envelope(linestring(point(:rlon1, :rlat1), point(:rlon2, :rlat2))))
 			ORDER BY st_distance(point(:lon, :lat), geom) 
-			LIMIT 1');
-		$stmt->bindValue('lat', $lat);
+			LIMIT :offset, :limit');		
 		$stmt->bindValue('lon', $lon);
-		$stmt->bindValue('rlat1', $rlat1);
-		$stmt->bindValue('rlat2', $rlat2);
+		$stmt->bindValue('lat', $lat);
 		$stmt->bindValue('rlon1', $rlon1);
 		$stmt->bindValue('rlon2', $rlon2);
+		$stmt->bindValue('rlat1', $rlat1);
+		$stmt->bindValue('rlat2', $rlat2);		
+		$stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
+		$stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
 		
 		$stmt->execute();
-		$id = $stmt->fetchColumn();
+		$result = $stmt->fetchAll();
 		
-		if(!$id) return null;
+		if(!$result) return null;
 		
-        return $id;
+		//Если была запрошена одна точка - вернуть ее ID
+		if($limit == 1) return $result[0]['id'];
+        
+		return $result;
     }
 
 	//Добавление локации		

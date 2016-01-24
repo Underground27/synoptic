@@ -65,7 +65,7 @@ $app->error(function (\Exception $e, $code) use ($app) {
 			
 			$message = $e->getMessage();
     }
-    
+	
 	return new JsonResponse( array(
 		'status'=>'error',
 		'message' => $message,

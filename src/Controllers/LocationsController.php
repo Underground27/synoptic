@@ -37,12 +37,20 @@ class LocationsController implements ControllerProviderInterface
 				return $app->abort(201, 'No content');	 
 			}
 			
-			return $app->json( array(
+			$output = array(
 				'status'=>'ok',
 				'data' => $data
-			));
-        });		
+			);
 
+			//Если передан параметр - получить ближайшие источники (форма редактирования)
+			if($app['request']->get('with_near_src'))
+			{
+				$output['sources'] = $app['models.sources']->getNearestSources($data['lon'], $data['lat']);
+			}
+						
+			return $app->json($output);
+        });
+		
 		//Добавление локации	
 		$controllers->post('/', function (Application $app) 
 		{ 
@@ -57,7 +65,7 @@ class LocationsController implements ControllerProviderInterface
 			
 			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
 			if(!$data['source_id']){
-				$data['source_id'] = $app['models.sources']->getNearestSource($data['lat'], $data['lon']);
+				$data['source_id'] = $app['models.sources']->getNearestSource($data['lon'], $data['lat']);
 			}
 			
 			$id = $app['models.locations']->add($data);	
@@ -90,7 +98,7 @@ class LocationsController implements ControllerProviderInterface
 
 			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
 			if(!$data['source_id']){
-				$data['source_id'] = $app['models.sources']->getNearestSource($data['lat'], $data['lon']);
+				$data['source_id'] = $app['models.sources']->getNearestSource($data['lon'], $data['lat']);
 			}
 			
 			$result = $app['models.locations']->update($id, $data);	
