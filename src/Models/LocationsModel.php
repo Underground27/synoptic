@@ -1,7 +1,7 @@
 <?php
 namespace Synoptic\Models;
 
-class LocationModel
+class LocationsModel
 {
     protected $db;
 
@@ -51,13 +51,7 @@ class LocationModel
 	//Добавление локации		
 	public function add($data)
     {		
-		$stmt = $this->db->prepare('INSERT INTO locations
-			SET 
-			name = :name,
-			geom = GeomFromWKB(POINT(:lat, :lon)),
-			temperature = :temp,
-			population = :pop'		
-		);
+		$stmt = $this->db->prepare('INSERT INTO locations SET name = :name, geom = GeomFromWKB(POINT(:lat, :lon)), temperature = :temp, population = :pop');
 		$stmt->bindValue('name', $data['name']);
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);
@@ -77,23 +71,11 @@ class LocationModel
 	public function update($id, $data)
     {	
 		
-		$row_count = $this->db->fetchColumn('SELECT 
-			COUNT(*)
-			FROM locations
-			WHERE id = ?',
-			array($id)
-		);
+		$row_count = $this->db->fetchColumn('SELECT COUNT(*) FROM locations WHERE id = ?', array($id));
 		
 		if($row_count == 0) return false;
 		
-		$stmt = $this->db->prepare('UPDATE locations 
-			SET
-			name = :name,
-			geom = GeomFromWKB(POINT(:lat, :lon)),
-			temperature = :temp,
-			population = :pop
-			WHERE id = :id'
-		);
+		$stmt = $this->db->prepare('UPDATE locations SET name = :name, geom = GeomFromWKB(POINT(:lat, :lon)), temperature = :temp, population = :pop WHERE id = :id');
 		$stmt->bindValue('name', $data['name']);
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);

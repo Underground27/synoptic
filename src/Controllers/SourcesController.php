@@ -5,16 +5,16 @@ use Silex\Application;
 use Silex\ControllerProviderInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class LocationController implements ControllerProviderInterface
+class SourcesController implements ControllerProviderInterface
 {
 	public function connect(Application $app)
     {
         $controllers = $app['controllers_factory'];
 		
-		//Получение всех локаций
+		//Получение всех источников
         $controllers->get('/', function (Application $app) 
 		{			
-			$data = $app['models.locations']->getAll();
+			$data = $app['models.sources']->getAll();
 			
 			if(!$data) 
 			{
@@ -27,10 +27,10 @@ class LocationController implements ControllerProviderInterface
 			));
         });
 
-		//Получение одной локации
+		//Получение одного источника
 		$controllers->get('/{id}', function (Application $app, $id) 
 		{		
-			$data = $app['models.locations']->get($id);	
+			$data = $app['models.sources']->get($id);	
 			
 			if(!$data) 
 			{
@@ -43,7 +43,7 @@ class LocationController implements ControllerProviderInterface
 			));
         });		
 
-		//Добавление локации	
+		//Добавление источника	
 		$controllers->post('/', function (Application $app) 
 		{ 
 			$data = Array();
@@ -51,11 +51,8 @@ class LocationController implements ControllerProviderInterface
 			$data['name'] = $app['request']->get('name');
 			$data['lat'] = $app['request']->get('lat');
 			$data['lon'] = $app['request']->get('lon');
-			$data['temp'] = $app['request']->get('temp');
-			$data['pop'] = $app['request']->get('pop');
-			$data['source_id'] = $app['request']->get('source_id');
 			
-			$id = $app['models.locations']->add($data);	
+			$id = $app['models.sources']->add($data);	
 			
 			if(!$id) 
 			{
@@ -69,7 +66,7 @@ class LocationController implements ControllerProviderInterface
 			));
         });
 
-		//Изменение локации	
+		//Изменение источника	
 		$controllers->put('/{id}', function (Application $app, $id) 
 		{
 			$post_data = $app['request']->request;
@@ -79,11 +76,8 @@ class LocationController implements ControllerProviderInterface
 			$data['name'] = $app['request']->get('name');
 			$data['lat'] = $app['request']->get('lat');
 			$data['lon'] = $app['request']->get('lon');
-			$data['temp'] = $app['request']->get('temp');
-			$data['pop'] = $app['request']->get('pop');
-			$data['source_id'] = $app['request']->get('source_id');	
 
-			$result = $app['models.locations']->update($id, $data);	
+			$result = $app['models.sources']->update($id, $data);	
 					
 			if(!$result)
 			{
@@ -96,10 +90,10 @@ class LocationController implements ControllerProviderInterface
 			));
         });
 
-		//Удаление локации
+		//Удаление источника
 		$controllers->delete('/{id}', function (Application $app, $id) 
 		{
-			$result = $app['models.locations']->delete($id);
+			$result = $app['models.sources']->delete($id);
 			
 			if(!$result) 
 			{

@@ -35,11 +35,15 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
 
 //Инициализация моделей
 $app['models.locations'] = $app->share(function() use ($app) {
-    return new Models\LocationModel($app['db']);
+    return new Models\LocationsModel($app['db']);
+});
+$app['models.sources'] = $app->share(function() use ($app) {
+    return new Models\SourcesModel($app['db']);
 });
 
 //Инициализация контроллеров
-$app->mount('/api/location', new Controllers\LocationController());
+$app->mount('/api/locations', new Controllers\LocationsController());
+$app->mount('/api/sources', new Controllers\SourcesController());
 
 $app->get('/', function () {
     return 'Hello!';
@@ -61,8 +65,8 @@ $app->error(function (\Exception $e, $code) use ($app) {
 			
 			$message = $e->getMessage();
     }
-	
-    return new JsonResponse( array(
+    
+	return new JsonResponse( array(
 		'status'=>'error',
 		'message' => $message,
 		'code' => $code
