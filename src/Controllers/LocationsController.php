@@ -11,9 +11,18 @@ class LocationsController implements ControllerProviderInterface
     {
         $controllers = $app['controllers_factory'];
 		
+		//Получение локали, если была передана и поддерживается
+		$controllers->before(function () use ($app){			
+			$locale = $app['request']->get('_locale');
+			if($locale && in_array($locale, $app['locale.supported']))
+			{
+				$app['locale'] = $locale;
+			}
+		});
+		
 		//Получение всех локаций
         $controllers->get('/', function (Application $app) 
-		{			
+		{						
 			$data = $app['models.locations']->getAll();
 			
 			if(!$data) 
@@ -57,6 +66,7 @@ class LocationsController implements ControllerProviderInterface
 			$data = Array();
 			
 			$data['name'] = $app['request']->get('name');
+			$data['name_i18n'] = $app['request']->get('name_i18n');
 			$data['lat'] = $app['request']->get('lat');
 			$data['lon'] = $app['request']->get('lon');
 			$data['temp'] = $app['request']->get('temp');
@@ -84,9 +94,7 @@ class LocationsController implements ControllerProviderInterface
 
 		//Изменение локации	
 		$controllers->put('/{id}', function (Application $app, $id) 
-		{
-			$post_data = $app['request']->request;
-			
+		{	
 			$data = Array();
 			
 			$data['name'] = $app['request']->get('name');

@@ -10,6 +10,15 @@ class SourcesController implements ControllerProviderInterface
 	public function connect(Application $app)
     {
         $controllers = $app['controllers_factory'];
+
+		//Получение локали, если была передана и поддерживается
+		$controllers->before(function () use ($app){			
+			$locale = $app['request']->get('_locale');
+			if($locale && in_array($locale, $app['locale.supported']))
+			{
+				$app['locale'] = $locale;
+			}
+		});
 		
 		//Получение всех источников
         $controllers->get('/', function (Application $app) 

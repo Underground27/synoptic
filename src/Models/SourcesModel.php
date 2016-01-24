@@ -4,10 +4,12 @@ namespace Synoptic\Models;
 class SourcesModel
 {
     protected $db;
+    protected $locale;
 
-    public function __construct(\Doctrine\DBAL\Connection $dbo)
+    public function __construct(\Doctrine\DBAL\Connection $dbo, $locale)
     {
         $this->db = $dbo;
+		$this->locale = $locale;
     }
 
 	//Получение всех локаций из БД

@@ -12,7 +12,10 @@ ExceptionHandler::register(APP_DEBUG);
 
 $app = new Silex\Application();
 
+//Настройки фреймворка
 $app['debug'] = APP_DEBUG;
+$app['locale'] = 'ua';
+$app['locale.supported'] = Array('ua', 'ru', 'en');
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,10 +38,10 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
 
 //Инициализация моделей
 $app['models.locations'] = $app->share(function() use ($app) {
-    return new Models\LocationsModel($app['db']);
+    return new Models\LocationsModel($app['db'], $app['locale']);
 });
 $app['models.sources'] = $app->share(function() use ($app) {
-    return new Models\SourcesModel($app['db']);
+    return new Models\SourcesModel($app['db'], $app['locale']);
 });
 
 //Инициализация контроллеров
