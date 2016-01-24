@@ -55,6 +55,11 @@ class LocationsController implements ControllerProviderInterface
 			$data['pop'] = $app['request']->get('pop');
 			$data['source_id'] = $app['request']->get('source_id');
 			
+			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
+			if(!$data['source_id']){
+				$data['source_id'] = $app['models.sources']->getNearestSource($data['lat'], $data['lon']);
+			}
+			
 			$id = $app['models.locations']->add($data);	
 			
 			if(!$id) 
@@ -83,6 +88,11 @@ class LocationsController implements ControllerProviderInterface
 			$data['pop'] = $app['request']->get('pop');
 			$data['source_id'] = $app['request']->get('source_id');	
 
+			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
+			if(!$data['source_id']){
+				$data['source_id'] = $app['models.sources']->getNearestSource($data['lat'], $data['lon']);
+			}
+			
 			$result = $app['models.locations']->update($id, $data);	
 					
 			if(!$result)

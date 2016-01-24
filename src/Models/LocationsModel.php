@@ -51,12 +51,13 @@ class LocationsModel
 	//Добавление локации		
 	public function add($data)
     {		
-		$stmt = $this->db->prepare('INSERT INTO locations SET name = :name, geom = GeomFromWKB(POINT(:lat, :lon)), temperature = :temp, population = :pop');
+		$stmt = $this->db->prepare('INSERT INTO locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id');
 		$stmt->bindValue('name', $data['name']);
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);
 		$stmt->bindValue('temp', $data['temp']);
 		$stmt->bindValue('pop', $data['pop']);
+		$stmt->bindValue('source_id', $data['source_id']);
 		
 		$result = $stmt->execute();
 		
@@ -70,17 +71,17 @@ class LocationsModel
 	//Изменение локации		
 	public function update($id, $data)
     {	
-		
 		$row_count = $this->db->fetchColumn('SELECT COUNT(*) FROM locations WHERE id = ?', array($id));
 		
 		if($row_count == 0) return false;
 		
-		$stmt = $this->db->prepare('UPDATE locations SET name = :name, geom = GeomFromWKB(POINT(:lat, :lon)), temperature = :temp, population = :pop WHERE id = :id');
+		$stmt = $this->db->prepare('UPDATE locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id WHERE id = :id');
 		$stmt->bindValue('name', $data['name']);
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);
 		$stmt->bindValue('temp', $data['temp']);
 		$stmt->bindValue('pop', $data['pop']);
+		$stmt->bindValue('source_id', $data['source_id']);		
 		$stmt->bindValue('id', $id);
 		
 		$result = $stmt->execute();
