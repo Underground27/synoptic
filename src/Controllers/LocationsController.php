@@ -98,12 +98,13 @@ class LocationsController implements ControllerProviderInterface
 			$data = Array();
 			
 			$data['name'] = $app['request']->get('name');
+			$data['name_i18n'] = $app['request']->get('name_i18n');			
 			$data['lat'] = $app['request']->get('lat');
 			$data['lon'] = $app['request']->get('lon');
 			$data['temp'] = $app['request']->get('temp');
 			$data['pop'] = $app['request']->get('pop');
-			$data['source_id'] = $app['request']->get('source_id');	
-
+			$data['source_id'] = $app['request']->get('source_id');
+			
 			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
 			if(!$data['source_id']){
 				$data['source_id'] = $app['models.sources']->getNearestSource($data['lon'], $data['lat']);

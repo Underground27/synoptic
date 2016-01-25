@@ -17,8 +17,7 @@ class LocationsModel
     {	
 		$stmt = $this->db->prepare('SELECT 
 			locations.id,
-			locations.name,
-			locations_i18n.name as name_i18n,
+			COALESCE(locations_i18n.name, locations.name) as name,
 			y(locations.geom) as lat,
 			x(locations.geom) as lon,
 			locations.temperature,
@@ -34,10 +33,7 @@ class LocationsModel
 		$stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
 		$stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
 		$stmt->bindValue('locale', $this->locale);
-		
 		$result = $stmt->execute();
-		
-		var_dump($this->locale);
 		
 		$rows = $stmt->fetchAll();
 
@@ -49,8 +45,7 @@ class LocationsModel
     {
         $row = $this->db->fetchAssoc('SELECT 
 			locations.id,
-			locations.name,
-			locations_i18n.name as name_i18n,
+			COALESCE(locations_i18n.name, locations.name) as name,
 			y(locations.geom) as lat,
 			x(locations.geom) as lon,
 			locations.temperature,
@@ -71,20 +66,45 @@ class LocationsModel
 	//Добавление локации		
 	public function add($data)
     {		
-		$stmt = $this->db->prepare('INSERT INTO locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id');
-		$stmt->bindValue('name', $data['name']);
-		$stmt->bindValue('lat', $data['lat']);
-		$stmt->bindValue('lon', $data['lon']);
-		$stmt->bindValue('temp', $data['temp']);
-		$stmt->bindValue('pop', $data['pop']);
-		$stmt->bindValue('source_id', $data['source_id']);
-		
-		$result = $stmt->execute();
-		
-		if(!$result) return false;
-		
-		$new_id = $this->db->lastInsertId();
-		
+		$this->db->beginTransaction();
+		try {
+			//Добавление новой локации
+			$stmt = $this->db->prepare('INSERT INTO locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id');
+			$stmt->bindValue('name', $data['name']);
+			$stmt->bindValue('lat', $data['lat']);
+			$stmt->bindValue('lon', $data['lon']);
+			$stmt->bindValue('temp', $data['temp']);
+			$stmt->bindValue('pop', $data['pop']);
+			$stmt->bindValue('source_id', $data['source_id']);			
+			$stmt->execute();
+	
+			//Получить ID будущей записи
+			$new_id = $this->db->lastInsertId();
+			
+			if(!$new_id) return false;
+			
+			//Добавление названий на нескольких языках для новой локации 
+			$this->db->beginTransaction();
+			try {
+				$stmt = $this->db->prepare('INSERT INTO locations_i18n (location_id, name, lang_code) values (:id, :name, :code)');
+				
+				//Для каждой локализации добавить название локации
+				foreach($data['name_i18n'] as $code => $name){
+					$stmt->execute( array('id' => $new_id, 'name' => $name, 'code' => $code) );
+				}
+				
+				$this->db->commit();
+			} catch (Exception $e) {
+				$conn->rollBack();
+				throw $e;
+			}
+			
+			$this->db->commit();
+		} catch (Exception $e) {
+			$conn->rollBack();
+			throw $e;
+		}
+
 		return $new_id;
     }
 
@@ -95,18 +115,45 @@ class LocationsModel
 		
 		if($row_count == 0) return false;
 		
-		$stmt = $this->db->prepare('UPDATE locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id WHERE id = :id');
-		$stmt->bindValue('name', $data['name']);
-		$stmt->bindValue('lat', $data['lat']);
-		$stmt->bindValue('lon', $data['lon']);
-		$stmt->bindValue('temp', $data['temp']);
-		$stmt->bindValue('pop', $data['pop']);
-		$stmt->bindValue('source_id', $data['source_id']);		
-		$stmt->bindValue('id', $id);
-		
-		$result = $stmt->execute();
+		$this->db->beginTransaction();
+		try {
+			//Изменение локации
+			$stmt = $this->db->prepare('UPDATE locations SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)), temperature = :temp, population = :pop, source_id = :source_id WHERE id = :id');
+			$stmt->bindValue('name', $data['name']);
+			$stmt->bindValue('lat', $data['lat']);
+			$stmt->bindValue('lon', $data['lon']);
+			$stmt->bindValue('temp', $data['temp']);
+			$stmt->bindValue('pop', $data['pop']);
+			$stmt->bindValue('source_id', $data['source_id']);		
+			$stmt->bindValue('id', $id);
+			$result = $stmt->execute();
+			
+			if(!$result) return false;
+			
+			//Добавление названий на нескольких языках для новой локации
+			//Если поле с такой локалью есть - просто изменить имя
+			$this->db->beginTransaction();
+			try {
+				$stmt = $this->db->prepare('INSERT INTO locations_i18n (location_id, name, lang_code) values (:id, :name, :code) ON DUPLICATE KEY UPDATE name = VALUES(name)');
+				
+				//Для каждой локализации добавить название локации
+				foreach($data['name_i18n'] as $code => $name){
+					$stmt->execute( array('id' => $id, 'name' => $name, 'code' => $code) );
+				}
+				
+				$this->db->commit();
+			} catch (Exception $e) {
+				$conn->rollBack();
+				throw $e;
+			}
+			
+			$this->db->commit();
+		} catch (Exception $e) {
+			$conn->rollBack();
+			throw $e;
+		}
 	
-		return $result;
+		return true;
     }
 	
 	//Удаление локации	
