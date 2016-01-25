@@ -13,8 +13,11 @@ class LocationsModel
     }
 
 	//Получение всех локаций из БД
-    public function getAll($limit = 50, $offset = 0)
+    public function getAll($limit = null, $offset = null)
     {	
+		if($limit == null) $limit = 50;
+		if($offset == null) $offset = 0;
+	
 		$stmt = $this->db->prepare('SELECT 
 			locations.id,
 			COALESCE(locations_i18n.name, locations.name) as name,
@@ -30,8 +33,8 @@ class LocationsModel
 			AND locations_i18n.lang_code = :locale
 			LIMIT :offset, :limit'
 		);
-		$stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
-		$stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
+		$stmt->bindValue('offset', (int) $offset, \PDO::PARAM_INT);
+		$stmt->bindValue('limit', (int) $limit, \PDO::PARAM_INT);
 		$stmt->bindValue('locale', $this->locale);
 		$result = $stmt->execute();
 		

@@ -23,7 +23,10 @@ class LocationsController implements ControllerProviderInterface
 		//Получение всех локаций
         $controllers->get('/', function (Application $app) 
 		{						
-			$data = $app['models.locations']->getAll();
+			$limit = $app['request']->get('limit');
+			$offset = $app['request']->get('offset');
+			
+			$data = $app['models.locations']->getAll($limit, $offset);
 			
 			if(!$data) 
 			{

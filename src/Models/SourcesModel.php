@@ -13,9 +13,17 @@ class SourcesModel
     }
 
 	//Получение всех локаций из БД
-    public function getAll($limit = 50, $offset = 0)
+    public function getAll($limit = null, $offset = null)
     {	
-		$rows = $this->db->fetchAll('SELECT id, name, y(sources.geom) as lat, x(sources.geom) as lon FROM sources');
+		if($limit == null) $limit = 50;
+		if($offset == null) $offset = 0;
+		
+		$stmt = $this->db->prepare('SELECT id, name, y(sources.geom) as lat, x(sources.geom) as lon FROM sources LIMIT :offset, :limit');
+		$stmt->bindValue('limit', (int) $limit, \PDO::PARAM_INT);
+		$stmt->bindValue('offset', (int) $offset, \PDO::PARAM_INT);
+		$stmt->execute();
+		$rows = $stmt->fetchAll();
+		
         return $rows;
     }
 	
@@ -28,13 +36,23 @@ class SourcesModel
     }
 	
 	//Получение ближайшего источника в радиусе, 100 км
-	public function getNearestSource($lon, $lat){
-		return $this->getNearestSources($lon, $lat, 1);
+	public function getNearestSourceId($lon, $lat){
+		$result = $this->getNearestSources($lon, $lat, 1, 0);
+		if(!$result || !isset($result[0]['id']))
+		{
+			return false;
+		}
+		
+		return $result[0]['id'];
 	}
 	
 	//Получение ближайших источников в радиусе, 100 км
-    public function getNearestSources($lon, $lat, $limit = 100, $offset = 0)
+    public function getNearestSources($lon, $lat, $limit = null, $offset = null)
     {	
+		if($limit == null) $limit = 20;
+		if($offset == null) $offset = 0;
+		if($$return_one_id == null) $$return_one_id = false;
+	
 		//Получить координаты нижнего левого и верхнего правого углов квадрата поиска
 		$dist = 100;				//Радиус поиска, км.
 		$latdeg_len_km = 111.045;	//Длина градуса широты, км.
@@ -58,16 +76,13 @@ class SourcesModel
 		$stmt->bindValue('rlon2', $rlon2);
 		$stmt->bindValue('rlat1', $rlat1);
 		$stmt->bindValue('rlat2', $rlat2);		
-		$stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
-		$stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
-		
+		$stmt->bindValue('limit', (int) $limit, \PDO::PARAM_INT);
+		$stmt->bindValue('offset', (int) $offset, \PDO::PARAM_INT);
 		$stmt->execute();
+		
 		$result = $stmt->fetchAll();
 		
-		if(!$result) return null;
-		
-		//Если была запрошена одна точка - вернуть ее ID
-		if($limit == 1) return $result[0]['id'];
+		if(!$result) return false;
         
 		return $result;
     }
@@ -79,7 +94,6 @@ class SourcesModel
 		$stmt->bindValue('name', $data['name']);
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);
-		
 		$result = $stmt->execute();
 		
 		if(!$result) return false;
@@ -101,7 +115,6 @@ class SourcesModel
 		$stmt->bindValue('lat', $data['lat']);
 		$stmt->bindValue('lon', $data['lon']);
 		$stmt->bindValue('id', $id);
-		
 		$result = $stmt->execute();
 	
 		return $result;

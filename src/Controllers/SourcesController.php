@@ -23,7 +23,10 @@ class SourcesController implements ControllerProviderInterface
 		//Получение всех источников
         $controllers->get('/', function (Application $app) 
 		{			
-			$data = $app['models.sources']->getAll();
+			$limit = $app['request']->get('limit');
+			$offset = $app['request']->get('offset');
+		
+			$data = $app['models.sources']->getAll($limit, $offset);
 			
 			if(!$data) 
 			{
