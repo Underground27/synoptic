@@ -1,17 +1,51 @@
 <?php
 namespace Synoptic\Models;
 
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Constraints as Assert;
+
 class SourcesModel
 {
     protected $db;
     protected $locale;
 
-    public function __construct(\Doctrine\DBAL\Connection $dbo, $locale)
+	public $lat;
+	public $lon;
+	public $name;	
+	
+    public function __construct(\Doctrine\DBAL\Connection $dbo, $locale, $validator)
     {
         $this->db = $dbo;
 		$this->locale = $locale;
+		$this->validator = $validator;
     }
+	
+	//Валидация
+	public function validate(){
+		$errors_array = Array();
+		$errors = $this->validator->validate($this);
+		
+		if(count($errors) > 0){
+			foreach ($errors as $error)
+			{
+				$errors_array[$error->getPropertyPath()] = $error->getMessage();
+			}
+		}
+		
+		return $errors_array;
+	}
 
+	//Правила валидации	
+	static public function loadValidatorMetadata(ClassMetadata $metadata)
+	{
+		$metadata->addPropertyConstraint('lat', new Assert\NotBlank());
+		$metadata->addPropertyConstraint('lat', new Assert\Range(array('min' => -90, 'max' => 90)));
+		$metadata->addPropertyConstraint('lon', new Assert\NotBlank());
+		$metadata->addPropertyConstraint('lon', new Assert\Range(array('min' => 0, 'max' => 180)));
+		$metadata->addPropertyConstraint('name', new Assert\NotBlank());
+		$metadata->addPropertyConstraint('name', new Assert\Length(array('min' => 2, 'max' => 50)));			
+	}	
+	
 	//Получение всех локаций из БД
     public function getAll($limit = null, $offset = null)
     {	
@@ -34,13 +68,54 @@ class SourcesModel
 		
 		return $row;
     }
+
+	//Добавление локации		
+	public function add()
+    {		
+		$stmt = $this->db->prepare('INSERT INTO sources SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat))');
+		$stmt->bindValue('name', $this->name);
+		$stmt->bindValue('lat', $this->lat);
+		$stmt->bindValue('lon', $this->lon);
+		$result = $stmt->execute();
+		
+		if(!$result) return false;
+		
+		$new_id = $this->db->lastInsertId();
+		
+		return $new_id;
+    }
+
+	//Изменение локации		
+	public function update($id)
+    {	
+		$row_count = $this->db->fetchColumn('SELECT COUNT(*) FROM sources WHERE id = ?', array($id));
+		
+		if($row_count == 0) return false;
+		
+		$stmt = $this->db->prepare('UPDATE sources SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)) WHERE id = :id');
+		$stmt->bindValue('name', $this->name);
+		$stmt->bindValue('lat', $this->lat);
+		$stmt->bindValue('lon', $this->lon);
+		$stmt->bindValue('id', $id);
+		$result = $stmt->execute();
+	
+		return $result;
+    }
+	
+	//Удаление локации	
+	public function delete($id)
+    {
+        $result = $this->db->delete('sources', array('id' => $id));
+	
+		return $result;
+    }	
 	
 	//Получение ближайшего источника в радиусе, 100 км
 	public function getNearestSourceId($lon, $lat){
 		$result = $this->getNearestSources($lon, $lat, 1, 0);
 		if(!$result || !isset($result[0]['id']))
 		{
-			return false;
+			return null;
 		}
 		
 		return $result[0]['id'];
@@ -84,47 +159,6 @@ class SourcesModel
 		
 		if(!$result) return false;
         
-		return $result;
-    }
-
-	//Добавление локации		
-	public function add($data)
-    {		
-		$stmt = $this->db->prepare('INSERT INTO sources SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat))');
-		$stmt->bindValue('name', $data['name']);
-		$stmt->bindValue('lat', $data['lat']);
-		$stmt->bindValue('lon', $data['lon']);
-		$result = $stmt->execute();
-		
-		if(!$result) return false;
-		
-		$new_id = $this->db->lastInsertId();
-		
-		return $new_id;
-    }
-
-	//Изменение локации		
-	public function update($id, $data)
-    {	
-		$row_count = $this->db->fetchColumn('SELECT COUNT(*) FROM sources WHERE id = ?', array($id));
-		
-		if($row_count == 0) return false;
-		
-		$stmt = $this->db->prepare('UPDATE sources SET name = :name, geom = GeomFromWKB(POINT(:lon, :lat)) WHERE id = :id');
-		$stmt->bindValue('name', $data['name']);
-		$stmt->bindValue('lat', $data['lat']);
-		$stmt->bindValue('lon', $data['lon']);
-		$stmt->bindValue('id', $id);
-		$result = $stmt->execute();
-	
-		return $result;
-    }
-	
-	//Удаление локации	
-	public function delete($id)
-    {
-        $result = $this->db->delete('sources', array('id' => $id));
-	
 		return $result;
     }
 }

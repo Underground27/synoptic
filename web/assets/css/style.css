@@ -1,0 +1,24 @@
+.container{
+	margin-top: 20px;
+}
+
+#loading {
+	display: none;
+}
+
+td.controls{
+	text-align: right;
+}
+td .old-value{
+	display: none;
+}
+
+.btn-save, .btn-close, #clearSearch{
+	display: none;
+}
+.edit .btn-save, .edit .btn-close{
+	display: inline-block;
+}
+.edit .btn-edit, .edit .btn-delete{
+	display: none;
+}

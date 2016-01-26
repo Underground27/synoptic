@@ -3,7 +3,6 @@ namespace Synoptic\Controllers;
 
 use Silex\Application;
 use Silex\ControllerProviderInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class SourcesController implements ControllerProviderInterface
 {
@@ -53,18 +52,30 @@ class SourcesController implements ControllerProviderInterface
 				'status'=>'ok',
 				'data' => $data
 			));
-        });		
+        })
+		->assert('id', '\d+');		
 
 		//Добавление источника	
 		$controllers->post('/', function (Application $app) 
 		{ 
-			$data = Array();
+			$source = $app['models.sources'];
+		
+			$source->name = $app['request']->get('name');
+			$source->lat = $app['request']->get('lat');
+			$source->lon = $app['request']->get('lon');
+
+			$errors = $source->validate();
 			
-			$data['name'] = $app['request']->get('name');
-			$data['lat'] = $app['request']->get('lat');
-			$data['lon'] = $app['request']->get('lon');
+			if (count($errors) > 0) {				
+				return $app->json( array(
+					'status' => 'error',
+					'message' => 'Validation error',
+					'violations' => $errors,
+					'code' => 400
+				), 400);
+			}
 			
-			$id = $app['models.sources']->add($data);	
+			$id = $app['models.sources']->add();	
 			
 			if(!$id) 
 			{
@@ -80,16 +91,25 @@ class SourcesController implements ControllerProviderInterface
 
 		//Изменение источника	
 		$controllers->put('/{id}', function (Application $app, $id) 
-		{
-			$post_data = $app['request']->request;
-			
-			$data = Array();
-			
-			$data['name'] = $app['request']->get('name');
-			$data['lat'] = $app['request']->get('lat');
-			$data['lon'] = $app['request']->get('lon');
+		{			
+			$source = $app['models.sources'];
+		
+			$source->name = $app['request']->get('name');
+			$source->lat = $app['request']->get('lat');
+			$source->lon = $app['request']->get('lon');
 
-			$result = $app['models.sources']->update($id, $data);	
+			$errors = $source->validate();
+			
+			if (count($errors) > 0) {				
+				return $app->json( array(
+					'status' => 'error',
+					'message' => 'Validation error',
+					'violations' => $errors,
+					'code' => 400
+				), 400);
+			}			
+			
+			$result = $app['models.sources']->update($id);	
 					
 			if(!$result)
 			{
@@ -100,7 +120,8 @@ class SourcesController implements ControllerProviderInterface
 				'status'=>'ok',
 				'message' => 'Data successfully updated'
 			));
-        });
+        })
+		->assert('id', '\d+');
 
 		//Удаление источника
 		$controllers->delete('/{id}', function (Application $app, $id) 
@@ -116,7 +137,8 @@ class SourcesController implements ControllerProviderInterface
 				'status'=>'ok',
 				'message' => 'Data successfully deleted'
 			));	
-        });
+        })
+		->assert('id', '\d+');
 				
         return $controllers;
     }

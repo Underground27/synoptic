@@ -25,6 +25,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Synoptic\Controllers as Controllers;
 use Synoptic\Models as Models;
 
+//Разрешить передавать метод через POST (html формы не умеют PUT и DELETE)
+Request::enableHttpMethodParameterOverride();
+
 $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'	=> 'pdo_mysql',
@@ -36,20 +39,23 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     ),
 ));
 
+$app->register(new Silex\Provider\ValidatorServiceProvider());
+
 //Инициализация моделей
 $app['models.locations'] = $app->share(function() use ($app) {
-    return new Models\LocationsModel($app['db'], $app['locale']);
+    return new Models\LocationsModel($app['db'], $app['locale'], $app['validator']);
 });
 $app['models.sources'] = $app->share(function() use ($app) {
-    return new Models\SourcesModel($app['db'], $app['locale']);
+    return new Models\SourcesModel($app['db'], $app['locale'], $app['validator']);
 });
 
 //Инициализация контроллеров
 $app->mount('/api/locations', new Controllers\LocationsController());
 $app->mount('/api/sources', new Controllers\SourcesController());
 
-$app->get('/', function () {
-    return 'Hello!';
+//При переходе в корень - редирект на демо-страницу
+$app->get('/', function () use ($app) {
+    return $app->redirect('/web/locations.html');
 });
 
 //Обработчик ошибок
@@ -68,8 +74,6 @@ $app->error(function (\Exception $e, $code) use ($app) {
 			
 			$message = $e->getMessage();
     }
-	
-	return $message;
 	
 	return new JsonResponse( array(
 		'status'=>'error',

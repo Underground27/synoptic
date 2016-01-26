@@ -3,7 +3,6 @@ namespace Synoptic\Controllers;
 
 use Silex\Application;
 use Silex\ControllerProviderInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class LocationsController implements ControllerProviderInterface
 {
@@ -41,47 +40,70 @@ class LocationsController implements ControllerProviderInterface
 
 		//Получение одной локации
 		$controllers->get('/{id}', function (Application $app, $id) 
-		{		
-			$data = $app['models.locations']->get($id);	
-			
+		{
+			$data = $app['models.locations']->get($id);
+
 			if(!$data) 
 			{
 				return $app->abort(201, 'No content');	 
 			}
-			
-			$output = array(
-				'status'=>'ok',
+
+			$output = Array(
+				'status' => 'ok',
 				'data' => $data
 			);
-
-			//Если передан параметр - получить ближайшие источники (форма редактирования)
-			if($app['request']->get('with_near_src'))
+			
+			//Если передан параметр - получить ближайшие источники и названия на всех языках (для формы редактирования)
+			if($app['request']->get('all_fields'))
 			{
 				$output['sources'] = $app['models.sources']->getNearestSources($data['lon'], $data['lat']);
+				$output['names_i18n'] = $app['models.locations']->getNamesI18n($id);
 			}
-						
+			
 			return $app->json($output);
-        });
+        })
+		->assert('id', '\d+');
 		
 		//Добавление локации	
 		$controllers->post('/', function (Application $app) 
 		{ 
-			$data = Array();
+			$location = $app['models.locations'];
 			
-			$data['name'] = $app['request']->get('name');
-			$data['name_i18n'] = $app['request']->get('name_i18n');
-			$data['lat'] = $app['request']->get('lat');
-			$data['lon'] = $app['request']->get('lon');
-			$data['temp'] = $app['request']->get('temp');
-			$data['pop'] = $app['request']->get('pop');
-			$data['source_id'] = $app['request']->get('source_id');
+			$location->name = $app['request']->get('name');
+			$location->name_i18n = $app['request']->get('name_i18n');
+			$location->lat = $app['request']->get('lat');
+			$location->lon = $app['request']->get('lon');
+			$location->temp = $app['request']->get('temp');
+			$location->pop = $app['request']->get('pop');
+			$location->source_id = $app['request']->get('source_id');
 			
-			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
-			if(!$data['source_id']){
-				$data['source_id'] = $app['models.sources']->getNearestSource($data['lon'], $data['lat']);
+			$errors = $location->validate();
+						
+			if (count($errors) > 0) {	
+				return $app->json( array(
+					'status' => 'error',
+					'message' => 'Validation error',
+					'violations' => $errors,
+					'code' => 400
+				), 400);
 			}
 			
-			$id = $app['models.locations']->add($data);	
+			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
+			if(!$location->source_id)
+			{
+				$location->source_id = $app['models.sources']->getNearestSourceId($location->lon, $location->lat);
+			}
+			else
+			{
+				//Иначе проверить существует ли указанный источник
+				$source = $app['models.sources']->get($location->source_id);
+				if(!$source)
+				{
+					return $app->abort(400, 'Specified source not exists');
+				}
+			}		
+			
+			$id = $location->add();	
 			
 			if(!$id) 
 			{
@@ -89,7 +111,7 @@ class LocationsController implements ControllerProviderInterface
 			}
 			
 			return $app->json( array(
-				'status'=>'ok',
+				'status' => 'ok',
 				'message' => 'Data successfully added',
 				'id' => $id
 			));
@@ -98,22 +120,43 @@ class LocationsController implements ControllerProviderInterface
 		//Изменение локации	
 		$controllers->put('/{id}', function (Application $app, $id) 
 		{	
-			$data = Array();
+			$location = $app['models.locations'];
 			
-			$data['name'] = $app['request']->get('name');
-			$data['name_i18n'] = $app['request']->get('name_i18n');			
-			$data['lat'] = $app['request']->get('lat');
-			$data['lon'] = $app['request']->get('lon');
-			$data['temp'] = $app['request']->get('temp');
-			$data['pop'] = $app['request']->get('pop');
-			$data['source_id'] = $app['request']->get('source_id');
+			$location->name = $app['request']->get('name');
+			$location->name_i18n = $app['request']->get('name_i18n');			
+			$location->lat = $app['request']->get('lat');
+			$location->lon = $app['request']->get('lon');
+			$location->temp = $app['request']->get('temp');
+			$location->pop = $app['request']->get('pop');
+			$location->source_id = $app['request']->get('source_id');
 			
-			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
-			if(!$data['source_id']){
-				$data['source_id'] = $app['models.sources']->getNearestSource($data['lon'], $data['lat']);
+			$errors = $location->validate();
+			
+			if (count($errors) > 0) {				
+				return $app->json( array(
+					'status' => 'error',
+					'message' => 'Validation error',
+					'violations' => $errors,
+					'code' => 400
+				), 400);
 			}
 			
-			$result = $app['models.locations']->update($id, $data);	
+			//Если не передан ID источника, пробовать найти ближайший в радиусе 100км
+			if(!$location->source_id)
+			{
+				$location->source_id = $app['models.sources']->getNearestSourceId($location->lon, $location->lat);
+			}
+			else
+			{
+				//Иначе проверить существует ли указанный источник
+				$source = $app['models.sources']->get($location->source_id);
+				if(!$source)
+				{
+					return $app->abort(400, 'Specified source not exists');
+				}
+			}	
+			
+			$result = $app['models.locations']->update($id);	
 					
 			if(!$result)
 			{
@@ -124,11 +167,12 @@ class LocationsController implements ControllerProviderInterface
 				'status'=>'ok',
 				'message' => 'Data successfully updated'
 			));
-        });
+        })
+		->assert('id', '\d+');
 
 		//Удаление локации
 		$controllers->delete('/{id}', function (Application $app, $id) 
-		{
+		{			
 			$result = $app['models.locations']->delete($id);
 			
 			if(!$result) 
@@ -140,8 +184,30 @@ class LocationsController implements ControllerProviderInterface
 				'status'=>'ok',
 				'message' => 'Data successfully deleted'
 			));	
-        });
-				
+        })
+		->assert('id', '\d+');
+
+		//Получение ближайших источников для локации
+		$controllers->get('/{id}/nearest-sources', function (Application $app, $id) 
+		{	
+			$row = $app['models.locations']->get($id);	
+			
+			if(!$row) 
+			{
+				return $app->abort(400, 'Data not exists'); 
+			}
+
+			$data = $app['models.sources']->getNearestSources($row['lon'], $row['lat']);
+
+						
+			return $app->json(array(
+				'status'=>'ok',
+				'data' => $data
+			));
+        })
+		->assert('id', '\d+');		
+
+	
         return $controllers;
     }
 }
