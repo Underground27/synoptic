@@ -58,6 +58,10 @@ $app->get('/', function () use ($app) {
     return $app->redirect('/web/locations.html');
 });
 
+$app->get('/api', function () use ($app) {
+    return 'SYNOPTIC API WORKS!';
+});
+
 //Обработчик ошибок
 $app->error(function (\Exception $e, $code) use ($app) {
     switch ($code) {

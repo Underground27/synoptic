@@ -1,11 +1,24 @@
 $( document ).ready(function() {	
 
 	var editDefaultAction = $('#edit-form').attr('action');
+	
+	
+	if(Cookies.get('lang') == 'undefined'){
+		var lang = 'ua';
+		Cookies.set('lang', lang)
+	}else{
+		var lang = Cookies.get('lang');
+	}
 
+	console.log(lang);
+	
 	//Отправить запрос на получение данных
 	$.ajax({
 		url: 'api/locations/',
 		type: 'GET',
+		data: {
+			'_locale': lang
+		},
 		error: function(result) {
 			if(result.responseJSON){
 				text = JSON.stringify(result.responseJSON, null, '\t');
@@ -165,6 +178,12 @@ $( document ).ready(function() {
 		});
 	});
 	
+	$('#lang-selector a').click(function(){
+		lang = $(this).attr('data-lang');
+		Cookies.set('lang', lang);
+		location.reload();
+	});
+		
 	//AJAX отправка форм для демонстрации ответа сервера
 	$('#add-form, #edit-form').submit(function(e){
 		

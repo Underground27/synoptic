@@ -8,7 +8,8 @@ class SourcesModel
 {
     protected $db;
     protected $locale;
-
+	protected $validator;
+	
 	public $lat;
 	public $lon;
 	public $name;	

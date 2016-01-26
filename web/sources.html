@@ -20,7 +20,7 @@
 			margin-bottom: 5px;
 			font-weight: 700; 
 		}
-		.nav-tabs{ margin-bottom: 15px; }		
+		.nav-tabs{ margin-bottom: 15px; }
 	</style>
 	
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -61,22 +61,23 @@
 						</div>
 					</form>
 				</li>
-			</ul>	
+			</ul>
+			
 		</div>
 		</nav>	
 	
 	</div><!-- .col-md-12 -->
 	</div><!-- .row -->		
-
+	
 	<div class="row">
 	<div class="col-md-12">
 		<ul class="nav nav-tabs">
-			<li role="presentation" class="active"><a href="locations.html">Населенные пункты</a></li>
-			<li role="presentation"><a href="sources.html">Источники данных</a></li>
+			<li role="presentation"><a href="locations.html">Населенные пункты</a></li>
+			<li role="presentation" class="active"><a href="sources.html">Источники данных</a></li>
 		</ul>
 	</div><!-- .col-md-12 -->
 	</div><!-- .row -->		
-	
+		
 	<div class="row">
 	<div class="col-md-12">
 	<div class="panel panel-default">
@@ -96,15 +97,13 @@
 	<div class="row">
 	<div class="col-md-12">
 	<div class="panel panel-default">
-		<div class="panel-heading" id="content">Населенные пункты</div>
+		<div class="panel-heading" id="content">Источники данных о температуре</div>
 		<table class="table table-striped" id="data-table">
 			<tr>
 				<th>ID</th>
 				<th>Название</th>
-				<th>Координаты</th>
-				<th>t &deg;С</th>
-				<th>Источник данных</th>
-				<th>Население, чел.</th>
+				<th>Широта</th>
+				<th>Долгота</th>
 				<th>Управление</th>
 			</tr>
 		</table>
@@ -115,12 +114,12 @@
 	<div class="row">
 	<div class="col-md-12">
 	<div class="panel panel-default">
-		<div class="panel-heading" id="edit">Редактировать населенный пункт</div>
+		<div class="panel-heading" id="edit">Редактировать источник</div>
 		<div class="panel-body">
 	
-		<form id="edit-form" action="api/locations/" method="POST">
+		<form id="edit-form" action="api/sources/" method="POST">
 		<div class="form-group">
-			<label for="edit-name">Название населенного пункта</label>
+			<label for="edit-name">Название источника</label>
 			<input type="text" class="form-control" id="edit-name" name="name" placeholder="Название">
 		</div>
 		<div class="form-group">
@@ -131,32 +130,6 @@
 			<label for="edit-lat">Широта, градусов&deg;</label>
 			<input type="text" class="form-control" id="edit-lat" name="lat" placeholder="Широта">
 		</div>
-		<div class="form-group">
-			<label for="edit-temp">Температура, &deg;С</label>
-			<input type="text" class="form-control" id="edit-temp" name="temp" placeholder="Температура">
-		</div>
-		<div class="form-group">
-			<label for="edit-pop">Численность населения, чел.</label>
-			<input type="text" class="form-control" id="edit-pop" name="pop" placeholder="Население">
-		</div>		
-		<div class="form-group">
-			<label for="edit-source_id">Источник данных о температуре</label>
-			<select class="form-control" id="edit-source" name="source_id">
-				<option value="0">Ближайший</option>
-			</select>
-		</div>		
-	
-		<p class="fieldset-title">Перевод названия</p>
-		
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_ua" name="name_i18n[ua]" placeholder="Укрїнська">
-		</div>
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_ru" name="name_i18n[ru]" placeholder="Русский">
-		</div>
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_en" name="name_i18n[en]" placeholder="English">
-		</div>	
 	
 		<button type="submit" class="btn btn-default">Cохранить</button>
 		<button type="reset" class="btn btn-default btn-reset">Очистить</button>
@@ -172,12 +145,12 @@
 	<div class="row">
 	<div class="col-md-12">
 	<div class="panel panel-default">
-		<div class="panel-heading" id="add">Добавить населенный пункт</div>
+		<div class="panel-heading" id="add">Добавить источник</div>
 		<div class="panel-body">
 	
-		<form id="add-form" action="api/locations/" method="POST">
+		<form id="add-form" action="api/sources/" method="POST">
 		<div class="form-group">
-			<label for="add-name">Название населенного пункта</label>
+			<label for="add-name">Название источника</label>
 			<input type="text" class="form-control" id="add-name" name="name" placeholder="Название">
 		</div>
 		<div class="form-group">
@@ -188,32 +161,6 @@
 			<label for="add-lat">Широта, градусов&deg;</label>
 			<input type="text" class="form-control" id="add-lat" name="lat" placeholder="Широта">
 		</div>
-		<div class="form-group">
-			<label for="add-temp">Температура, &deg;С</label>
-			<input type="text" class="form-control" id="add-temp" name="temp" placeholder="Температура">
-		</div>
-		<div class="form-group">
-			<label for="add-pop">Численность населения, чел.</label>
-			<input type="text" class="form-control" id="add-pop" name="pop" placeholder="Население">
-		</div>		
-		<div class="form-group">
-			<label for="add-source_id">Источник данных о температуре</label>
-			<select class="form-control" id="add-source_id" name="source_id">
-				<option value="0">Ближайший</option>
-			</select>
-		</div>		
-		
-		<p class="fieldset-title">Перевод названия</p>
-		
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_ua" name="name_i18n[ua]" placeholder="Укрїнська">
-		</div>
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_ru" name="name_i18n[ru]" placeholder="Русский">
-		</div>
-		<div class="form-group">
-			<input type="text" class="form-control names_i18n" id="lang_en" name="name_i18n[en]" placeholder="English">
-		</div>	
 		
 		<button type="submit" class="btn btn-default">Добавить</button>
 		<button type="reset" class="btn btn-default btn-reset">Очистить</button>
@@ -230,7 +177,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/js.cookie.js"></script>
-	<script src="assets/js/common-locations.js"></script>
+    <script src="assets/js/js.cookie.js"></script>	
+	<script src="assets/js/common-sources.js"></script>
   </body>
 </html>
